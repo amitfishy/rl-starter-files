@@ -25,7 +25,7 @@ parser.add_argument("--results_dir", default='results',
                     help="name of the model (default: {ENV}_{ALGO}_{TIME})")
 parser.add_argument("--seed", type=int, default=1,
                     help="random seed (default: 1)")
-parser.add_argument("--log-interval", type=int, default=1,
+parser.add_argument("--log-interval", type=int, default=20,
                     help="number of updates between two logs (default: 1)")
 parser.add_argument("--save-interval", type=int, default=100,
                     help="number of updates between two saves (default: 10, 0 means no saving)")
@@ -160,6 +160,7 @@ start_time = time.time()
 num_frames_array = []
 perf_array = []
 
+txt_logger.info("Performance")
 while num_frames < args.frames:
     # Update model parameters
 
@@ -190,9 +191,10 @@ while num_frames < args.frames:
         header += ["entropy", "value", "policy_loss", "value_loss", "grad_norm"]
         data += [logs["entropy"], logs["value"], logs["policy_loss"], logs["value_loss"], logs["grad_norm"]]
 
-        txt_logger.info(
-            "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | F:μσmM {:.1f} {:.1f} {} {} | H {:.3f} | V {:.3f} | pL {:.3f} | vL {:.3f} | ∇ {:.3f}"
-            .format(*data))
+        # txt_logger.info(
+        #     "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | F:μσmM {:.1f} {:.1f} {} {} | H {:.3f} | V {:.3f} | pL {:.3f} | vL {:.3f} | ∇ {:.3f}"
+        #     .format(*data))
+        txt_logger.info(return_per_episode['mean'])
 
         header += ["return_" + key for key in return_per_episode.keys()]
         data += return_per_episode.values()
