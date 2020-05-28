@@ -5,6 +5,8 @@ import torch
 import torch_ac
 import tensorboardX
 import sys
+import os
+import numpy as np
 
 import utils
 from model import ACModel
@@ -19,13 +21,13 @@ parser.add_argument("--algo", required=True,
                     help="algorithm to use: a2c | ppo (REQUIRED)")
 parser.add_argument("--env", required=True,
                     help="name of the environment to train on (REQUIRED)")
-parser.add_argument("--model", default=None,
+parser.add_argument("--results_dir", default='results',
                     help="name of the model (default: {ENV}_{ALGO}_{TIME})")
 parser.add_argument("--seed", type=int, default=1,
                     help="random seed (default: 1)")
 parser.add_argument("--log-interval", type=int, default=1,
                     help="number of updates between two logs (default: 1)")
-parser.add_argument("--save-interval", type=int, default=10,
+parser.add_argument("--save-interval", type=int, default=100,
                     help="number of updates between two saves (default: 10, 0 means no saving)")
 parser.add_argument("--procs", type=int, default=16,
                     help="number of processes (default: 16)")
@@ -68,11 +70,19 @@ args.mem = args.recurrence > 1
 
 # Set run dir
 
-date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
-default_model_name = f"{args.env}_{args.algo}_seed{args.seed}_{date}"
+# date = datetime.datetime.now().strftime("%y-%m-%d-%H-%M-%S")
+# default_model_name = f"{args.env}"
 
-model_name = args.model or default_model_name
-model_dir = utils.get_model_dir(model_name)
+# model_name = args.model or default_model_name
+# model_dir = utils.get_model_dir(model_name)
+results_dir = os.path.join(args.results_dir, args.env)
+model_dir = os.path.join(results_dir, 'models', 'seed' + str(args.seed))
+if not os.path.exists(model_dir):
+    try:
+        os.makedirs(model_dir)
+    except:
+        pass
+output_performance_filename = os.path.join(results_dir, 'seed' + str(args.seed) + '.npz')
 
 # Load loggers and Tensorboard writer
 
@@ -147,6 +157,8 @@ txt_logger.info("Optimizer loaded\n")
 num_frames = status["num_frames"]
 update = status["update"]
 start_time = time.time()
+num_frames_array = []
+perf_array = []
 
 while num_frames < args.frames:
     # Update model parameters
@@ -193,6 +205,10 @@ while num_frames < args.frames:
         for field, value in zip(header, data):
             tb_writer.add_scalar(field, value, num_frames)
 
+        # print ('Return per episode is:', return_per_episode['mean'])
+        perf_array.append(return_per_episode['mean'])
+        num_frames_array.append(num_frames)
+
     # Save status
 
     if args.save_interval > 0 and update % args.save_interval == 0:
@@ -202,3 +218,5 @@ while num_frames < args.frames:
             status["vocab"] = preprocess_obss.vocab.vocab
         utils.save_status(status, model_dir)
         txt_logger.info("Status saved")
+
+np.savez(output_performance_filename, perf_array = np.array(perf_array), num_frames_array = np.array(num_frames_array))
