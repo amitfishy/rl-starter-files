@@ -194,7 +194,7 @@ while num_frames < args.frames:
         # txt_logger.info(
         #     "U {} | F {:06} | FPS {:04.0f} | D {} | rR:μσmM {:.2f} {:.2f} {:.2f} {:.2f} | F:μσmM {:.1f} {:.1f} {} {} | H {:.3f} | V {:.3f} | pL {:.3f} | vL {:.3f} | ∇ {:.3f}"
         #     .format(*data))
-        txt_logger.info(return_per_episode['mean'])
+        txt_logger.info("U {} | F {:06} | FPS {:04.0f} | r {:.5f}".format(update, num_frames, fps, return_per_episode['mean']))
 
         header += ["return_" + key for key in return_per_episode.keys()]
         data += return_per_episode.values()
